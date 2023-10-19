@@ -8,8 +8,6 @@ import torch
 from torch.utils.data import (DataLoader, Dataset, RandomSampler,
                               SequentialSampler, TensorDataset)
 from transformers import *
-import sys
-import random
 
 logger = log.getLogger(__name__)
 
@@ -66,20 +64,15 @@ def augment(guid, para):
 def read_examples_from_file_knn(data_dir, mode, train_examples):
     file_path = os.path.join(data_dir, "{}.txt".format(mode))
     guid_index = 0
-    # custom format for examples: [([all words from doc_0], [all_labels from doc0])]
     examples = []
-    print("Printing out the training data:\n")
     with open(file_path, encoding="utf-8") as f:
         words = []
         labels = []
         for line in f:
-            # if you are done reading a complete sentence, add
-            # all its words/tokens and labels to the words/labels array
             if line.startswith("-DOCSTART-") or line == "" or line == "\n":
                 if words:
-                    # append just each token, label as a tuple
-                    examples.append((words, labels))
-                    #examples.append(InputExample(guid="{}-{}".format(mode, guid_index), words=words, labels=labels))
+                    examples.append(InputExample(
+                        guid="{}-{}".format(mode, guid_index), words=words, labels=labels))
                     guid_index += 1
                     words = []
                     labels = []
@@ -91,13 +84,9 @@ def read_examples_from_file_knn(data_dir, mode, train_examples):
                 else:
                     # Examples could have no label for mode = "test"
                     labels.append("O")
-        
         if words:
-            # append just each token, label as a tuple
-            examples.append((words, labels))
-            #print("tokens:{}\nlabels:{}\n".format(words, labels))
-            #examples.append(InputExample(guid="{}-{}".format(mode, guid_index), words=words, labels=labels))
-        
+            examples.append(InputExample(
+                guid="{}-{}".format(mode, guid_index), words=words, labels=labels))
     if mode == 'train':
         if train_examples < 0 or train_examples > len(examples):
             return examples
@@ -117,17 +106,15 @@ def read_examples_from_file(data_dir, mode, train_examples, args):
                 
     para = para if args.semi else None
         
-    #print("Printing out the training data:\n")
+    
     with open(file_path, encoding="utf-8") as f:
         words = []
         labels = []
         for line in f:
             if line.startswith("-DOCSTART-") or line == "" or line == "\n":
                 if words:
-                    #print("tokens:{}\nlabels:{}\n".format(words, labels))
-                    #examples.append(InputExample(guid="{}-{}".format(mode, guid_index), words=words, labels=labels, data_dir = para))
-                    # append just each token, label as a tuple
-                    examples.append((words, labels))
+                    examples.append(InputExample(
+                        guid="{}-{}".format(mode, guid_index), words=words, labels=labels, data_dir = para))
                     guid_index += 1
                     words = []
                     labels = []
@@ -140,10 +127,8 @@ def read_examples_from_file(data_dir, mode, train_examples, args):
                     # Examples could have no label for mode = "test"
                     labels.append("O")
         if words:
-            #print("tokens:{}\nlabels:{}\n".format(words, labels))
-            #examples.append(InputExample(guid="{}-{}".format(mode, guid_index), words=words, labels=labels, data_dir = para))
-            # append just each token, label as a tuple
-            examples.append((words, labels))
+            examples.append(InputExample(
+                guid="{}-{}".format(mode, guid_index), words=words, labels=labels, data_dir = para))
     if mode == 'train':
         if train_examples < 0 or train_examples > len(examples): 
             if args.semi:
@@ -166,6 +151,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
                                  pad_subtoken_with_real_label=False,
                                 subtoken_label_type='real',label_sep_cls=False):
     print('process training data',len(examples))
+    
 
     label_map = {label: i for i, label in enumerate(label_list)}
     features = []
@@ -431,7 +417,6 @@ def convert_unlabeled_examples_to_features(examples,labels ,max_seq_length, toke
             UnlabeledFeatures(input_ids=input_ids, input_mask=input_mask, segment_ids=segment_ids, mask_ids=mask_ids,
             input_ids2=input_ids2, input_mask2=input_mask2, segment_ids2=segment_ids2, mask_ids2=mask_ids2)
         )
-    print("Label map: {}\n".format(label_map))
     return features
 
 
@@ -446,17 +431,6 @@ def get_labels(path):
     else:
         return ["O", "B-MISC", "I-MISC", "B-PER", "I-PER", "B-ORG", "I-ORG", "B-LOC", "I-LOC"]
 
-def unpack_data(data):
-    unpacked_data = []
-    
-    for words, labels in data:
-        unpacked_data.append({
-            'tokens': words,
-            'labels': labels
-        })
-    
-    return unpacked_data
-
 
 def read_data(args, tokenizer, labels, pad_token_label_id, mode, train_examples = -1, 
               omit_sep_cls_token=False,
@@ -468,7 +442,7 @@ def read_data(args, tokenizer, labels, pad_token_label_id, mode, train_examples 
         #examples = examples[0]
         print(mode)
         print('data num: {}'.format(len(examples)))
-        '''
+
         features = convert_examples_to_features(examples, labels, args.max_seq_length, tokenizer, 
                                     cls_token = tokenizer.cls_token, sep_token =  tokenizer.sep_token, pad_token = tokenizer.convert_tokens_to_ids([tokenizer.pad_token])[0],
                                     cls_token_segment_id = 2 if args.model_type in ["xlnet"] else 0, 
@@ -488,9 +462,6 @@ def read_data(args, tokenizer, labels, pad_token_label_id, mode, train_examples 
         dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label_ids, all_subtoken_ids,all_sent_id)
         
         return dataset
-        '''
-        sys.exit()
-        #return examples
     elif semi and mode == 'train':
         (labeled, unlabeled) = examples
 
@@ -498,7 +469,8 @@ def read_data(args, tokenizer, labels, pad_token_label_id, mode, train_examples 
         print('labeled data num: {}'.format(len(labeled)))
         print('unlabeled data num: {}'.format(len(unlabeled)))
         
-        '''
+        
+        
         features = convert_examples_to_features(labeled, labels, args.max_seq_length, tokenizer, 
                                     cls_token = tokenizer.cls_token, sep_token =  tokenizer.sep_token, pad_token = tokenizer.convert_tokens_to_ids([tokenizer.pad_token])[0],
                                     cls_token_segment_id = 2 if args.model_type in ["xlnet"] else 0, 
@@ -536,69 +508,4 @@ def read_data(args, tokenizer, labels, pad_token_label_id, mode, train_examples 
         all_mask_ids2 = torch.tensor([f.mask_ids2 for f in unlabeled_features], dtype=torch.long)
 
         unlabeled_dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_mask_ids, all_input_ids2, all_input_mask2, all_segment_ids2, all_mask_ids2)
-        '''
-        
-        # first unpack the labeled and unlabeled data into a list of dicts
-        labeled = unpack_data(labeled)
-        unlabeled = unpack_data(unlabeled)
-        
-        total_tokens = 0
-        labelled_tokens = 0
-        for i in range(len(labeled)):
-            tokens = labeled[i]['tokens']
-            ner_tags_str = labeled[i]['labels']
-            total_tokens += len(tokens)
-            for j in range(len(ner_tags_str)):
-                if ner_tags_str[j] != 'O':
-                    labelled_tokens += 1
-
-        print("labelled tokens prior to augmentation: {}, total tokens from labelled sentences prior to augmentation: {}, label_density prior to augmentation: {}%\n".format(labelled_tokens, total_tokens,
-                                                                                    (labelled_tokens/total_tokens)*100))
-        
-        
-        print("labelled tokens prior to augmentation: {}, total tokens in CoNLL prior to augmentation: {}, label_coverage prior to augmentation: {}%\n".format(labelled_tokens, 204117,
-                                                                                    (labelled_tokens/204117)*100))
-        
-        
-        # Read KNN indices file here
-        file_path = os.path.join(args.data_dir, 'sent_id_knn_{}.pkl'.format(args.train_examples))
-        I_array = pickle.load(open(file_path, 'rb'))
-        args.sent_id_knn_array = I_array[:,1:args.num_knn_k+1]
-        assert args.sent_id_knn_array.shape[1]==args.num_knn_k
-        #print(args.sent_id_knn_array)
-        # simulate the gen_knn_mix_batch_method here
-        selected_ids = []
-        for idx, d in enumerate(labeled):
-            # assume idx corresponds to sent_id
-            if random.uniform(0, 1) < args.knn_mix_ratio:
-                
-                selected_ids.append(random.choice(args.sent_id_knn_array[idx]))
-            else:
-                selected_ids.append(random.randint(0, args.train_examples-1))
-        
-        new_labeled = labeled + [labeled[id] for id in selected_ids]
-        
-        #print("ID's randomly selected from CoNLL train [:700] to make up the labeled data: {}\n".format(selected_ids))
-        #print("labeled_data first 5 examples:{}\n".format(new_labeled[:5]))
-        #print("unlabeled_data first 5 examples:{}\n".format(unlabeled[:5]))
-        
-        
-        total_tokens = 0
-        labelled_tokens = 0
-        for i in range(len(new_labeled)):
-            tokens = new_labeled[i]['tokens']
-            ner_tags_str = new_labeled[i]['labels']
-            total_tokens += len(tokens)
-            for j in range(len(ner_tags_str)):
-                if ner_tags_str[j] != 'O':
-                    labelled_tokens += 1
-
-        print("labelled tokens after augmentation: {}, total tokens from labelled sentences after augmentation: {}, label_density after augmentation: {}%\n".format(labelled_tokens, total_tokens,
-                                                                                    (labelled_tokens/total_tokens)*100))
-    
-        print("labelled tokens after augmentation: {}, total tokens in CoNLL after augmentation: {}, label_coverage after augmentation: {}%\n".format(labelled_tokens, 204117,
-                                                                                    (labelled_tokens/204117)*100))
-        
-        sys.exit()
-        #return labeled, unlabeled
         return labeled_dataset, unlabeled_dataset

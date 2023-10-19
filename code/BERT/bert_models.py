@@ -4,7 +4,7 @@ implement the mixBert model for NER here
 import torch
 import torch.nn as nn
 from pytorch_transformers import *
-from transformers.modeling_bert import *
+from transformers.models.bert.modeling_bert import *
 import numpy as np
 
 import torch.nn.functional as F
@@ -263,4 +263,5 @@ class ClassificationBert(nn.Module):
         logits=self.classifier(all_hidden[0])
 
         return logits
-
+    
+    

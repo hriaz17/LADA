@@ -42,6 +42,8 @@ def read_examples_from_file(data_dir, mode):
         for line in f:
             if line.startswith("-DOCSTART-") or line == "" or line == "\n":
                 if words:
+                    # append just each token, label as a tuple
+                    #examples.append((words, labels))
                     examples.append(InputExample(guid="{}-{}".format(mode, guid_index), words=words, labels=labels))
                     guid_index += 1
                     words = []
@@ -55,6 +57,8 @@ def read_examples_from_file(data_dir, mode):
                     # Examples could have no label for mode = "test"
                     labels.append("O")
         if words:
+            # append just each token, label as a tuple
+            #examples.append((words, labels))
             examples.append(InputExample(guid="%s-%d".format(mode, guid_index), words=words, labels=labels))
     return examples
 
@@ -217,6 +221,6 @@ def gen_knn_mix_batch(batch,train_dataset,sent_id_knn_array,knn_mix_ratio,train_
             
     #3. make the batch 
     mix_batch = train_dataset[sent_id_mix_batch]
-    
+    #print("Mix batch with sampled sent_id's: {}\n".format(mix_batch))
         
     return mix_batch
